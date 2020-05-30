@@ -1,10 +1,15 @@
 package com.saan.controller;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.querydsl.core.types.Predicate;
 import com.saan.model.Employee;
 import com.saan.service.EmployeeService;
 
@@ -23,6 +29,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @Author Sandeep Maurya
@@ -118,7 +125,18 @@ public class EmployeeController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
+    }
 
+    @ApiOperation("get pageable record")
+    @GetMapping(path = "/pageable")
+    public Page<Employee> findAllByIdentifier(Pageable pageable,
+        @QuerydslPredicate(root = Employee.class) Predicate filterPredicate, @ApiIgnore Principal principal) {
+        var resultList = service.findAll();
+        if (pageable == null)
+            return new PageImpl<>(resultList);
+
+        final int currentTotal = (int) (pageable.getOffset() + pageable.getPageSize());
+        return new PageImpl<>(resultList, pageable, currentTotal);
     }
 
 }
